@@ -2,67 +2,43 @@ import * as React from "react";
 import * as PropTypes from "prop-types";
 import * as indexOf from "array-index-of";
 
-declare var VWO: any;
-
-const canUseDOM = typeof window !== "undefined";
-const vwoReady = typeof VWO !== "undefined" && VWO.v;
-
 const currentCampaigns = [];
-const campaignListeners = [];
 
-const checkForVWO = () => {
-    return typeof VWO !== "undefined" && VWO.v; 
+const getCookie = (name) => {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length == 2) return parts.pop().split(";").shift();
 }
-
-const activateVWO = () => {
-    VWO.onVariationApplied((x) => pushUpdate(x));
-}
-
-(() => {
-    if (!canUseDOM){
-        return;
-    }
-    if (checkForVWO()) {
-        activateVWO();
-    }
-    else{        
-        var interval = setInterval(function(){
-            if (checkForVWO()) {
-                clearInterval(interval);
-                activateVWO();
-            }
-        }, 50);
-    }
-})();
 
 export const subscribeToCampaign = (callback, campaignId) => {
-    const currentListener = campaignListeners[campaignId];
     const currentCampaign = currentCampaigns[campaignId];
-    if (!currentListener) {
-        campaignListeners[campaignId] = [];
-    }
     if (currentCampaign) {
         callback(currentCampaign);
+    } else {        
+        findCampaignValue(callback, campaignId);
     }
-    campaignListeners[campaignId].push(callback)
 }
 
-const pushUpdate = (campaign) => {
-    const campaignId = campaign[1];
-    const variantId = campaign[2];
-    const listeners = campaignListeners[campaignId];
-    const hasListeners = Array.isArray(listeners) && listeners.length > 0;
-    storeCampaign(campaign, campaignId);
-    if (!hasListeners) {
-        return;
+const findCampaignValue = (callback, campaignId) => {
+    let attempts = 0;
+    let interval = setInterval(function(){                
+        let campaignVal = getCookie(`_vis_opt_exp_${campaignId}_combi`);
+        if(campaignVal){
+            clearInterval(interval);
+            passCampaign(callback, campaignId, campaignVal);
+        } else if (attempts > 10){
+            clearInterval(interval);
+        }
+    }, 50);
+}
+
+const passCampaign = (callback, campaignId, campaignVal) => {
+    let campaign = {
+        variantIndex: parseInt(campaignVal),
+        campaignId
     }
-    campaignListeners[campaign.campaignName].forEach(cb => {
-        cb({
-            //VWO not 0 based for variant index
-            variantIndex: variantId,
-            campaignId
-        });
-    });
+    callback(campaign);
+    storeCampaign(campaign, campaignId);   
 }
 
 const storeCampaign = (campaign, id) => {
