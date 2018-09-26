@@ -34,7 +34,7 @@ const findCampaignValue = (callback, campaignId) => {
 
 const passCampaign = (callback, campaignId, campaignVal) => {
     let campaign = {
-        variantIndex: parseInt(campaignVal),
+        variantIndex: parseInt(campaignVal) - 1,
         campaignId
     }
     callback(campaign);
