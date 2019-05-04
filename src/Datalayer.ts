@@ -22,7 +22,7 @@ export const subscribeToCampaign = (callback, campaignId) => {
 const findCampaignValue = (callback, campaignId) => {
     let attempts = 0;
     let interval = setInterval(function(){                
-        let campaignVal = getCookie(`_vis_opt_exp_${campaignId}_combi`);
+        let campaignVal = getCookie(`debug_vis_opt_exp_${campaignId}_combi`) || getCookie(`_vis_opt_exp_${campaignId}_combi`);
         if(campaignVal){
             clearInterval(interval);
             passCampaign(callback, campaignId, campaignVal);
